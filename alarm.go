@@ -24,8 +24,8 @@ var (
   alertCategories = map[string]bool{}
   blacklist       = make(map[string]int64)
   blacklistMux    sync.Mutex
-  quietStart      time.Duration
-  quietEnd        time.Duration
+  quietStart      time.Time
+  quietEnd        time.Time
   lastDistance    = make(map[string]float64)
 )
 
@@ -83,16 +83,24 @@ func addToBlacklist(hex string) {
 }
 
 func inQuietHours() bool {
-  now := time.Now()
-  t := time.Duration(now.Hour())*time.Hour + time.Duration(now.Minute())*time.Minute
+  now := time.Now().UTC()
 
-  // quiet period does NOT cross midnight
-  if quietStart < quietEnd {
-    return t >= quietStart && t < quietEnd
+  start := time.Date(
+    now.Year(), now.Month(), now.Day(),
+    quietStart.Hour(), quietStart.Minute(), 0, 0, time.UTC,
+  )
+
+  end := time.Date(
+    now.Year(), now.Month(), now.Day(),
+    quietEnd.Hour(), quietEnd.Minute(), 0, 0, time.UTC,
+  )
+
+  // Handle ranges crossing midnight, e.g., 22:00–06:00
+  if end.Before(start) {
+    return now.After(start) || now.Before(end)
   }
 
-  // quiet period crosses midnight (e.g. 20:00 → 08:00)
-  return t >= quietStart || t < quietEnd
+  return now.After(start) && now.Before(end)
 }
 
 func triggerWebhook() {
@@ -106,7 +114,7 @@ func triggerWebhook() {
     return
   }
   defer func() {
-      _ = resp.Body.Close()
+    _ = resp.Body.Close()
   }()
 
   fmt.Println("[WEBHOOK] Status:", resp.StatusCode)
@@ -125,7 +133,7 @@ func checkAircraft() {
     return
   }
   defer func() {
-      _ = resp.Body.Close()
+    _ = resp.Body.Close()
   }()
 
   if resp.StatusCode != 200 {
@@ -157,14 +165,13 @@ func checkAircraft() {
     if !alertCategories[cat] || isBlacklisted(a.Hex) {
       continue
     }
+    print("NOT GETTING HERE")
 
-    // require aircraft actually moving toward observer
     if !isTowardYou(a.Track, a.Dir) {
       fmt.Printf("[SKIP] %s %s heading away (track %.1f°, dir %.1f°)\n", cat, a.Hex, a.Track, a.Dir)
       continue
     }
 
-    // optional — confirm decreasing distance
     if !isApproaching(a.Hex, a.Dst) {
       fmt.Printf("[SKIP] %s not closing distance (dst %.1f)\n", a.Hex, a.Dst)
       continue
@@ -214,18 +221,18 @@ func main() {
   }
 
   if v := os.Getenv("QUIET_START"); v != "" {
-    if d, err := time.ParseDuration(v); err == nil {
-      quietStart = d
+    if t, err := time.Parse("15:04", v); err == nil {
+      quietStart = t
     }
   }
 
   if v := os.Getenv("QUIET_END"); v != "" {
-    if d, err := time.ParseDuration(v); err == nil {
-      quietEnd = d
+    if t, err := time.Parse("15:04", v); err == nil {
+      quietEnd = t
     }
   }
 
-  if v := os.Getenv("ALERT_CATEGORIES"); v != "" {
+  if v := os.Getenv("CATEGORIES"); v != "" {
     for _, c := range strings.Split(v, ",") {
       alertCategories[strings.ToUpper(strings.TrimSpace(c))] = true
     }
