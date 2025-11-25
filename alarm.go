@@ -165,7 +165,6 @@ func checkAircraft() {
     if !alertCategories[cat] || isBlacklisted(a.Hex) {
       continue
     }
-    print("NOT GETTING HERE")
 
     if !isTowardYou(a.Track, a.Dir) {
       fmt.Printf("[SKIP] %s %s heading away (track %.1f°, dir %.1f°)\n", cat, a.Hex, a.Track, a.Dir)
