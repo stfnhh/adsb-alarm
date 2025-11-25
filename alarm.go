@@ -7,26 +7,26 @@ import (
   "math"
   "net/http"
   "os"
+  "strings"
   "sync"
   "time"
-  "strings"
 )
 
 var (
-  latitude     string
-  longitude    string
-  distance     string
-  webhookURL   string
-  apiKey       string
-  pollInterval time.Duration
-  blacklistTTL time.Duration
-  adsbURL      string
+  latitude        string
+  longitude       string
+  distance        string
+  webhookURL      string
+  apiKey          string
+  pollInterval    time.Duration
+  blacklistTTL    time.Duration
+  adsbURL         string
   alertCategories = map[string]bool{}
-  blacklist    = make(map[string]int64)
-  blacklistMux sync.Mutex
-  quietStart time.Duration
-  quietEnd   time.Duration
-  lastDistance = make(map[string]float64)
+  blacklist       = make(map[string]int64)
+  blacklistMux    sync.Mutex
+  quietStart      time.Duration
+  quietEnd        time.Duration
+  lastDistance    = make(map[string]float64)
 )
 
 type ADSBResponse struct {
@@ -88,7 +88,7 @@ func inQuietHours() bool {
 
   // quiet period does NOT cross midnight
   if quietStart < quietEnd {
-      return t >= quietStart && t < quietEnd
+    return t >= quietStart && t < quietEnd
   }
 
   // quiet period crosses midnight (e.g. 20:00 → 08:00)
@@ -105,7 +105,9 @@ func triggerWebhook() {
     fmt.Println("[ERROR] webhook request failed:", err)
     return
   }
-  defer resp.Body.Close()
+  defer func() {
+      _ = resp.Body.Close()
+  }()
 
   fmt.Println("[WEBHOOK] Status:", resp.StatusCode)
 }
@@ -122,7 +124,9 @@ func checkAircraft() {
     fmt.Println("[ERROR] Failed ADSB request:", err)
     return
   }
-  defer resp.Body.Close()
+  defer func() {
+      _ = resp.Body.Close()
+  }()
 
   if resp.StatusCode != 200 {
     fmt.Printf("[ERROR] ADSB returned HTTP %d\n", resp.StatusCode)
@@ -151,7 +155,7 @@ func checkAircraft() {
   for _, a := range parsed.AC {
     cat := strings.ToUpper(strings.TrimSpace(a.Category))
     if !alertCategories[cat] || isBlacklisted(a.Hex) {
-        continue
+      continue
     }
 
     // require aircraft actually moving toward observer
@@ -175,10 +179,10 @@ func checkAircraft() {
   }
 
   if inQuietHours() {
-      fmt.Println("[INFO] Quiet hours active — suppressing alert")
+    fmt.Println("[INFO] Quiet hours active — suppressing alert")
   } else {
-      fmt.Printf("[ACTION] Triggering webhook for %d inbound aircraft\n", len(found))
-      triggerWebhook()
+    fmt.Printf("[ACTION] Triggering webhook for %d inbound aircraft\n", len(found))
+    triggerWebhook()
   }
 
   for _, hex := range found {
@@ -210,21 +214,21 @@ func main() {
   }
 
   if v := os.Getenv("QUIET_START"); v != "" {
-      if d, err := time.ParseDuration(v); err == nil {
-          quietStart = d
-      }
+    if d, err := time.ParseDuration(v); err == nil {
+      quietStart = d
+    }
   }
 
   if v := os.Getenv("QUIET_END"); v != "" {
-      if d, err := time.ParseDuration(v); err == nil {
-          quietEnd = d
-      }
+    if d, err := time.ParseDuration(v); err == nil {
+      quietEnd = d
+    }
   }
 
   if v := os.Getenv("ALERT_CATEGORIES"); v != "" {
-      for _, c := range strings.Split(v, ",") {
-          alertCategories[strings.ToUpper(strings.TrimSpace(c))] = true
-      }
+    for _, c := range strings.Split(v, ",") {
+      alertCategories[strings.ToUpper(strings.TrimSpace(c))] = true
+    }
   }
 
   if v := os.Getenv("POLL_INTERVAL"); v != "" {
