@@ -24,8 +24,8 @@ var (
   alertCategories = map[string]bool{}
   blacklist    = make(map[string]int64)
   blacklistMux sync.Mutex
-
-  // optional: track last distance to confirm approach
+  quietStart time.Duration
+  quietEnd   time.Duration
   lastDistance = make(map[string]float64)
 )
 
@@ -80,6 +80,19 @@ func addToBlacklist(hex string) {
   blacklistMux.Lock()
   blacklist[hex] = time.Now().Add(blacklistTTL).Unix()
   blacklistMux.Unlock()
+}
+
+func inQuietHours() bool {
+  now := time.Now()
+  t := time.Duration(now.Hour())*time.Hour + time.Duration(now.Minute())*time.Minute
+
+  // quiet period does NOT cross midnight
+  if quietStart < quietEnd {
+      return t >= quietStart && t < quietEnd
+  }
+
+  // quiet period crosses midnight (e.g. 20:00 → 08:00)
+  return t >= quietStart || t < quietEnd
 }
 
 func triggerWebhook() {
@@ -161,8 +174,12 @@ func checkAircraft() {
     return
   }
 
-  fmt.Printf("[ACTION] Triggering webhook for %d inbound aircraft\n", len(found))
-  triggerWebhook()
+  if inQuietHours() {
+      fmt.Println("[INFO] Quiet hours active — suppressing alert")
+  } else {
+      fmt.Printf("[ACTION] Triggering webhook for %d inbound aircraft\n", len(found))
+      triggerWebhook()
+  }
 
   for _, hex := range found {
     addToBlacklist(hex)
@@ -192,12 +209,22 @@ func main() {
     os.Exit(1)
   }
 
+  if v := os.Getenv("QUIET_START"); v != "" {
+      if d, err := time.ParseDuration(v); err == nil {
+          quietStart = d
+      }
+  }
+
+  if v := os.Getenv("QUIET_END"); v != "" {
+      if d, err := time.ParseDuration(v); err == nil {
+          quietEnd = d
+      }
+  }
+
   if v := os.Getenv("ALERT_CATEGORIES"); v != "" {
       for _, c := range strings.Split(v, ",") {
           alertCategories[strings.ToUpper(strings.TrimSpace(c))] = true
       }
-  } else {
-      alertCategories["A7"] = true
   }
 
   if v := os.Getenv("POLL_INTERVAL"); v != "" {
