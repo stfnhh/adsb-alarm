@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"adsbmonitor/internal"
+  "github.com/stfnhh/adsb-alarm/internal"
 )
 
 func main() {
