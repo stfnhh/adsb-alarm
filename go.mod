@@ -1,4 +1,4 @@
-module github.com/stfnhh/adsb-monitor
+module github.com/stfnhh/adsb-alarm
 
 go 1.25.3
 
