@@ -89,69 +89,69 @@ jobs:
 
             const body = `# 🚀 GHCR Release for ${tag}
 
-Docker image successfully published to **GitHub Container Registry**.
+              Docker image successfully published to **GitHub Container Registry**.
 
----
+              ---
 
-## 📦 Image Information
+              ## 📦 Image Information
 
-**Image:** \`${process.env.IMAGE}\`  
-**Tag:** \`${tag}\`  
-**Manifest Digest:**  
-\`\`\`
-${manifestDigest}
-\`\`\`
+              **Image:** \`${process.env.IMAGE}\`  
+              **Tag:** \`${tag}\`  
+              **Manifest Digest:**  
+              \`\`\`
+              ${manifestDigest}
+              \`\`\`
 
----
+              ---
 
-## 🧬 Platforms Published
+              ## 🧬 Platforms Published
 
-${platformDetails || "_No per-platform digest data available (single-arch?)_"}
+              ${platformDetails || "_No per-platform digest data available (single-arch?)_"}
 
----
+              ---
 
-## 📥 Pull Commands
+              ## 📥 Pull Commands
 
-Pull the versioned tag:
-\`\`\`
-docker pull ${process.env.IMAGE}:${tag}
-\`\`\`
+              Pull the versioned tag:
+              \`\`\`
+              docker pull ${process.env.IMAGE}:${tag}
+              \`\`\`
 
-Pull the latest tag:
-\`\`\`
-docker pull ${process.env.IMAGE}:latest
-\`\`\`
+              Pull the latest tag:
+              \`\`\`
+              docker pull ${process.env.IMAGE}:latest
+              \`\`\`
 
-Pull by immutable digest:
-\`\`\`
-docker pull ${process.env.IMAGE}@${manifestDigest}
-\`\`\`
+              Pull by immutable digest:
+              \`\`\`
+              docker pull ${process.env.IMAGE}@${manifestDigest}
+              \`\`\`
 
----
+              ---
 
-## 🔍 Inspect Image Metadata
+              ## 🔍 Inspect Image Metadata
 
-Manifest list:
-\`\`\`
-docker manifest inspect ${process.env.IMAGE}:${tag}
-\`\`\`
+              Manifest list:
+              \`\`\`
+              docker manifest inspect ${process.env.IMAGE}:${tag}
+              \`\`\`
 
-Specific architecture:
-\`\`\`
-docker manifest inspect ${process.env.IMAGE}@${manifestDigest}
-\`\`\`
+              Specific architecture:
+              \`\`\`
+              docker manifest inspect ${process.env.IMAGE}@${manifestDigest}
+              \`\`\`
 
----
+              ---
 
-## 📝 OCI Metadata (from buildx)
-\`\`\`json
-${JSON.stringify(metadata, null, 2)}
-\`\`\`
+              ## 📝 OCI Metadata (from buildx)
+              \`\`\`json
+              ${JSON.stringify(metadata, null, 2)}
+              \`\`\`
 
----
+              ---
 
-Generated automatically by GitHub Actions.
-`;
+              Generated automatically by GitHub Actions.
+              `;
 
             await github.rest.repos.updateRelease({
               owner,
