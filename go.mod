@@ -1,3 +1,5 @@
-module github.com/yourname/adsb-monitor
+module adsbmonitor
 
-go 1.22
+go 1.25.3
+
+require github.com/kelseyhightower/envconfig v1.4.0

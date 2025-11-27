@@ -1,9 +1,13 @@
 FROM alpine AS certs
 RUN apk add --no-cache ca-certificates
 
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 WORKDIR /app
-COPY alarm.go go.mod .
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY main.go ./
+COPY internal ./internal
 RUN apk add --no-cache upx && \
     CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w" \
