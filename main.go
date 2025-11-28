@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"time"
 
-  "github.com/stfnhh/adsb-alarm/internal"
+	"github.com/stfnhh/adsb-alarm/internal"
 )
 
 func main() {
 	go func() {
-	    http.ListenAndServe("127.0.0.1:8081", nil)
+		http.ListenAndServe(":8081", nil)
 	}()
 
 	cfg := internal.LoadConfig()
