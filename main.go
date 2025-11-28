@@ -2,12 +2,16 @@ package main
 
 import (
 	"log/slog"
+	"os"
 	"time"
 
   "github.com/stfnhh/adsb-alarm/internal"
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "health" {
+	    os.Exit(0)
+	}
 	cfg := internal.LoadConfig()
 	slog.Info("adsb_monitor_start",
 		"adsb_url", cfg.ADSBURL,
