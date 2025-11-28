@@ -2,16 +2,17 @@ package main
 
 import (
 	"log/slog"
-	"os"
+	"net/http"
 	"time"
 
   "github.com/stfnhh/adsb-alarm/internal"
 )
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "health" {
-	    os.Exit(0)
-	}
+	go func() {
+	    http.ListenAndServe("127.0.0.1:8081", nil)
+	}()
+
 	cfg := internal.LoadConfig()
 	slog.Info("adsb_monitor_start",
 		"adsb_url", cfg.ADSBURL,
