@@ -1,16 +1,15 @@
 # checkov:skip=CKV_DOCKER_2: Healthchecks are handled by Kubernetes, not Docker
 
-FROM alpine:3.21 AS certs
+FROM alpine:3.23 AS certs
 RUN apk add --no-cache ca-certificates
 
-FROM golang:1.25.3-alpine3.21 AS builder
+FROM golang:1.25.5-alpine3.23 AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
-RUN go mod download
-
 COPY main.go ./
 COPY internal ./internal
-RUN apk add --no-cache upx && \
+RUN go mod download && \
+    apk add --no-cache upx && \
     CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w" \
     -trimpath \
