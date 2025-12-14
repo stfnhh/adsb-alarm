@@ -1,6 +1,6 @@
 # checkov:skip=CKV_DOCKER_2: Healthchecks are handled by Kubernetes, not Docker
 
-FROM golang:1.25.5-alpine3.23 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.23 AS builder
 WORKDIR /app
 RUN apk add --no-cache ca-certificates upx
 
