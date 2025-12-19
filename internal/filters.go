@@ -119,17 +119,17 @@ func EvaluateAircraft(cfg Config, ac []Aircraft) []string {
 			continue
 		}
 
-		// Geometry guard — fixes outbound / lateral false positives
-		if diff >= 90 {
-			slog.Info("skip_geometrically_outbound",
-				"hex", a.Hex,
-				"flight", flight,
-				"category", cat,
-				"angle_off_bearing_deg", diff,
-				"reason", "geometry_reject",
-			)
-			continue
-		}
+		// // Geometry guard — fixes outbound / lateral false positives
+		// if diff >= 90 {
+		// 	slog.Info("skip_geometrically_outbound",
+		// 		"hex", a.Hex,
+		// 		"flight", flight,
+		// 		"category", cat,
+		// 		"angle_off_bearing_deg", diff,
+		// 		"reason", "geometry_reject",
+		// 	)
+		// 	continue
+		// }
 
 		// Match
 		slog.Info("match_closing_range",
