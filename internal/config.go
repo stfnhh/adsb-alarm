@@ -50,34 +50,31 @@ func loadEnvFile(path string) {
 		key := strings.TrimSpace(parts[0])
 		val := strings.TrimSpace(parts[1])
 
-		// don't override existing env
+		// do not override explicitly set env vars
 		if os.Getenv(key) == "" {
 			os.Setenv(key, val)
 		}
 	}
 }
 
-func loadSecretEnv(key string, path string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return
-	}
-	os.Setenv(key, strings.TrimSpace(string(data)))
-}
-
 func LoadConfig() Config {
 	// 1. Load config file
 	loadEnvFile("/run/configs/app.env")
 
-	// 2. Load secret
-	loadSecretEnv("API_KEY", "/run/secrets/api_key")
+	// 2. Load secret into env
+	if os.Getenv("API_KEY_FILE") != "" {
+		b, err := os.ReadFile(os.Getenv("API_KEY_FILE"))
+		if err != nil {
+			slog.Error("config_error", "error", err.Error())
+			os.Exit(1)
+		}
+		os.Setenv("API_KEY", strings.TrimSpace(string(b)))
+	}
 
 	var cfg Config
 
 	if err := envconfig.Process("", &cfg); err != nil {
-		slog.Error("config_error",
-			"error", err.Error(),
-		)
+		slog.Error("config_error", "error", err.Error())
 		os.Exit(1)
 	}
 
@@ -96,4 +93,3 @@ func LoadConfig() Config {
 
 	return cfg
 }
-
