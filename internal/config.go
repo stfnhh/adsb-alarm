@@ -29,7 +29,49 @@ type Config struct {
 	CategorySet map[string]bool `ignored:"true"`
 }
 
+func loadEnvFile(path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+
+		// don't override existing env
+		if os.Getenv(key) == "" {
+			os.Setenv(key, val)
+		}
+	}
+}
+
+func loadSecretEnv(key string, path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	os.Setenv(key, strings.TrimSpace(string(data)))
+}
+
 func LoadConfig() Config {
+	// 1. Load config file
+	loadEnvFile("/run/configs/app.env")
+
+	// 2. Load secret
+	loadSecretEnv("API_KEY", "/run/secrets/api_key")
+
 	var cfg Config
 
 	if err := envconfig.Process("", &cfg); err != nil {
@@ -54,3 +96,4 @@ func LoadConfig() Config {
 
 	return cfg
 }
+
